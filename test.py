@@ -1,95 +1,137 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import warnings
-warnings.filterwarnings("ignore")
 import streamlit as st
-from windrose import WindroseAxes
-from statsmodels.tsa.stattools import acf
-from statsmodels.graphics.tsaplots import plot_acf
-warnings.filterwarnings("ignore")
-plt.rcParams['font.sans-serif'] = ['SimHei'] #正常显示中文标签
-plt.rcParams['axes.unicode_minus'] = False #正常显示负号
+import time
+# 设置网页标题，以及使用宽屏模式
+st.set_page_config(
+    page_title="运维管理后台",
+    layout="wide"
+
+)
+# 隐藏右边的菜单以及页脚
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+# 左边导航栏
+sidebar = st.sidebar.radio(
+    "导航栏",
+    ("首页", "项目管理", "用户管理", "权限管理")
+)
+if sidebar == "项目管理":
+    st.title("项目管理")
+    # 项目选择框
+    project_name = st.selectbox(
+        "请选择项目",
+        ["项目A", "项目B"]
+    )
+    if project_name:
+        # 表单
+        with st.form(project_name):
+            project_info_1 = st.text_input("项目信息1", project_name)
+            project_info_2 = st.text_input("项目信息2", project_name)
+            project_info_3 = st.text_input("项目信息3", project_name)
+            submitted = st.form_submit_button("提交")
+            if submitted:
+                # 在这里添加真实的业务逻辑
+                # 这是一个进度条
+                bar = st.progress(0)
+                for i in range(100):
+                    time.sleep(0.01)
+                    bar.progress(i)
+                st.write("项目信息1:%s, 项目信息2:%s, 项目信息3:%s" %
+                         (project_info_1, project_info_2, project_info_3))
+                st.success("提交成功")
 
 
-if __name__ == '__main__' :
-    st.title("SCADA数据分析")
-    # ---------------------------主栏-----------------------
-    # ---------------------------读入数据-----------------------
-    st.write("")
-    st.write("")
-    st.header('------------------------数据读入------------------------')  # 设置主栏第一部分
-    st.sidebar.header('-----------------数据读入-----------------')  # 设置设置侧栏第一部分
-    st.sidebar.subheader('* 数据上传 *')
-    st.subheader('* 数据说明 *')
-    file = st.sidebar.file_uploader('上传数据', type=['csv'], key=None)
-    scada_data = pd.read_csv(file)
-    # df = get_data(file)
-    st.dataframe(scada_data)
-
-    # ---------------------------选择时间序列-----------------------
-    st.sidebar.subheader('* 时间序列 *')
-    st.subheader('* 时间序列 *')
-    options = np.array(scada_data['real_time']).tolist()
-    (start_time, end_time) = st.select_slider("请选择时间序列：", options=options,
-                                              value=(options[0], options[len(options) - 1]))
-    # setting index as date
-    scada_data['real_time'] = pd.to_datetime(scada_data['real_time'], format='%Y-%m-%d')
-    scada_data.index = scada_data['real_time']
-    st.write("序列开始时间：", start_time)
-    st.write("序列结束时间：", end_time)
-    scada_data = scada_data[start_time:end_time]
-    st.dataframe(scada_data)
-    # ---------------------------数据分析-----------------------
-    st.header('------------------------数据分析------------------------')  # 设置主栏第一部分
-    st.sidebar.header('-----------------数据分析-----------------')  # 设置设置侧栏第一部分
-    # -----------时变特性分析-----------------
-    st.sidebar.subheader('* 时变特性分析 *')
-    st.subheader('* 时变特性分析 *')
-    type = st.sidebar.selectbox('请选择分析对象：',
-                                ('ActivePower', 'WindSpeed', 'NacellePosition', 'WindDirction', 'AirPressure',
-                                 'Temperature',
-                                 'PitchAngle', 'ErrorMode', 'OperationMode', 'GeratorSpeed', 'RotorSpeed',
-                                 'AirDensity'))
-    st.write("选择的分析对象为：", type)
-    st.line_chart(scada_data[type])
-    # -----------风玫瑰图-----------------
-    st.sidebar.subheader('* 风玫瑰图 *')
-    st.subheader('* 风玫瑰图 *')
-    ws = scada_data['WindSpeed']
-    wd = scada_data['WindDirction']
-    ax = WindroseAxes.from_ax()
-    fig = ax.bar(wd, ws, normed=True, opening=0.8, edgecolor='white')
-    st.set_option('deprecation.showPyplotGlobalUse', False)
-    st.pyplot(fig)
-    # -----------相关性分析-----------------
-    st.sidebar.subheader('* 相关性分析 *')
-    st.subheader('* 相关性分析 *')
-    # data.corr()计算相关系数
-    # Pearson相关性
-    st.sidebar.subheader(" (1) Pearson相关系数")
-    st.subheader(" (1) Pearson相关系数")
-    corr = scada_data.corr()
-    st.write("相关性系数:", corr)
-    fig, ax = plt.subplots(figsize=(8, 8))  # 调整画布大小
-    ax = sns.heatmap(corr, vmax=.8, square=True, annot=True)  # 画热力图   annot=True 显示系数
-    st.pyplot(fig)
-    # 自相关性acf
-    st.sidebar.subheader(" (2) 自相关性")
-    st.subheader(" (2) 自相关性")
- 
-
-    type_acf = st.sidebar.selectbox('请选择自相关性分析对象：',
-                                    (
-                                        'ActivePower', 'WindSpeed', 'NacellePosition', 'WindDirction', 'AirPressure',
-                                        'Temperature',
-                                        'PitchAngle', 'ErrorMode', 'OperationMode', 'GeratorSpeed', 'RotorSpeed',
-                                        'AirDensity'))
-    st.write("选择的自相关性分析对象为：", type_acf)
-    lags = st.sidebar.number_input("请输入自相关性的阶数：", min_value=1, max_value=200, value=30, step=1)
-    st.write("选择的自相关性阶数为：", lags)
-#     data_acf = acf(scada_data[type_acf], unbiased=False, nlags=lags, qstat=False, fft=None, alpha=None, missing='none')
-#     st.write("自相关性系数：", data_acf)
-    plot_acf(scada_data[type_acf])
-    st.pyplot()
+elif sidebar == "用户管理":
+    st.title("用户管理")
+    # 将页面分为左半边和右半边
+    left, right = st.beta_columns(2)
+    # 左半边页面展示部分
+    with left:
+        st.header("查看、更新用户信息")
+        user_name = st.selectbox(
+            "请选择用户",
+            ["郑立赛", "乔布斯", "王大拿"]
+        )
+        if user_name:
+            with st.form(user_name):
+                phone_num = st.text_input("手机号", user_name)
+                role = st.multiselect(
+                    "用户角色",
+                    ["大神", "大拿"],
+                    ["大神"]
+                )
+                user_group = st.multiselect(
+                    "请选择用户组",
+                    ["大神组", "大拿组"],
+                    ["大神组"]
+                )
+                submitted = st.form_submit_button("提交")
+                if submitted:
+                    # 这里添加真实的业务逻辑
+                    st.write("用户名:%s, 手机号:%s, 用户角色:%s, 用户组:%s" %
+                             (user_name, phone_num, role, user_group))
+                    st.success("提交成功")
+    # 右半边页面展示部分
+    with right:
+        st.header("添加、删除用户")
+        user_action = st.selectbox(
+            "请选择操作",
+            ["添加用户", "删除用户"]
+        )
+        if user_action:
+            with st.form(user_action):
+                if user_action == "添加用户":
+                    phone_num = st.text_input("手机号", user_name)
+                    role = st.multiselect(
+                        "用户角色",
+                        ["大神", "大拿"]
+                    )
+                    user_group = st.multiselect(
+                        "请选择用户组",
+                        ["大神组", "大拿组"]
+                    )
+                    submitted = st.form_submit_button("提交")
+                    if submitted:
+                        # 请在这里添加真实业务逻辑，或者单独写一个业务逻辑函数
+                        st.write("user_name:%s, phone_num:%s, role:%s, user_group:%s" % (
+                            user_name, phone_num, role, user_group))
+                        st.success("提交成功")
+                else:
+                    user_group = st.multiselect(
+                        "请选择要删除的用户",
+                        ["郑立赛", "乔布斯", "王大拿"]
+                    )
+                    submitted = st.form_submit_button("提交")
+                    if submitted:
+                        # 请在这里添加真实业务逻辑，或者单独写一个业务逻辑函数
+                        st.write("user_name:%s, phone_num:%s, role:%s, user_group:%s" % (
+                            user_name, phone_num, role, user_group))
+                        st.success("提交成功")
+elif sidebar == "权限管理":
+    st.title("权限管理")
+    with st.form("auth"):
+        user = st.multiselect(
+            "选择用户",
+            ["郑立赛", "乔布斯", "王大拿"]
+        )
+        role = st.multiselect(
+            "选择用户角色",
+            ["大神", "大拿"]
+        )
+        user_group = st.multiselect(
+            "请选择用户组",
+            ["大神组", "大拿组"]
+        )
+        submitted = st.form_submit_button("提交")
+        if submitted:
+            # 请在这里添加真实业务逻辑，或者单独写一个业务逻辑函数
+            st.write(
+                "用户:%s, 角色:%s, 用户组:%s" % (user, role, user_group))
+            st.success("提交成功")
+else:
+    st.title("运维管理后台")
+    st.write("欢迎使用运维管理后台")
