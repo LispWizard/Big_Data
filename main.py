@@ -61,7 +61,3 @@ else:
     html_data = f.read()
     f.close()
     st.components.v1.html(html_data, height=500, scrolling=False)
-    f = open("流量分布图.html", encoding="utf-8")
-    html_data = f.read()
-    f.close()
-    st.components.v1.html(html_data, height=500, scrolling=False)
